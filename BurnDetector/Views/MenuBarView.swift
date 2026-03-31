@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MenuBarView: View {
-    let viewModel: MenuBarViewModel
+    @Bindable var viewModel: MenuBarViewModel
 
     // MARK: - Body
 
@@ -22,12 +22,28 @@ struct MenuBarView: View {
 
             Divider()
 
+            // MARK: - Settings
+
+            Toggle("Sound alerts", isOn: $viewModel.settings.soundEnabled)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Threshold: \(viewModel.settings.threshold)%")
+                    .font(.caption)
+                Slider(
+                    value: thresholdBinding,
+                    in: 50...100,
+                    step: 1
+                )
+            }
+
+            Divider()
+
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
         }
         .padding()
-        .frame(width: 200)
+        .frame(width: 220)
     }
 
     // MARK: - Private
@@ -37,5 +53,12 @@ struct MenuBarView: View {
             return "CPU: \(usage)%"
         }
         return "CPU: --%"
+    }
+
+    private var thresholdBinding: Binding<Double> {
+        Binding(
+            get: { Double(viewModel.settings.threshold) },
+            set: { viewModel.settings.threshold = Int($0) }
+        )
     }
 }
