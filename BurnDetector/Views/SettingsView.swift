@@ -1,3 +1,10 @@
+//
+//  SettingsView.swift
+//  BurnDetector
+//
+//  Created by Fran Alarza on 31/3/26.
+//
+
 import SwiftUI
 
 struct SettingsView: View {
