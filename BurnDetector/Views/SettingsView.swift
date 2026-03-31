@@ -9,6 +9,15 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var settings: AppSettings
+    private let audioPlayer: AudioPlayerServiceProtocol
+    private let soundOptions = SoundOption.allBundled()
+
+    // MARK: - Init
+
+    init(settings: AppSettings, audioPlayer: AudioPlayerServiceProtocol = AudioPlayerService()) {
+        self.settings = settings
+        self.audioPlayer = audioPlayer
+    }
 
     // MARK: - Body
 
@@ -16,6 +25,23 @@ struct SettingsView: View {
         Form {
             Section("Alerts") {
                 Toggle("Sound alerts", isOn: $settings.soundEnabled)
+
+                HStack {
+                    Picker("Alert sound", selection: $settings.selectedSound) {
+                        ForEach(soundOptions) { option in
+                            Text(option.displayName).tag(option.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Button {
+                        Task {
+                            await audioPlayer.playSound(named: settings.selectedSound)
+                        }
+                    } label: {
+                        Image(systemName: "speaker.wave.2")
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("CPU Threshold: \(settings.threshold)%")
@@ -28,7 +54,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 350, height: 150)
+        .frame(width: 350, height: 200)
     }
 
     // MARK: - Private
