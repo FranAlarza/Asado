@@ -8,17 +8,27 @@ final class MenuBarViewModel {
 
     private(set) var cpuUsage: Int?
     private(set) var permissionsError = false
+    let settings: AppSettings
 
     // MARK: - Private
 
     private let service: CPUMonitoringServiceProtocol
+    private let audioPlayer: AudioPlayerServiceProtocol
     private let interval: TimeInterval
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
+    private var hasExceededThreshold = false
 
     // MARK: - Init
 
-    init(service: CPUMonitoringServiceProtocol = CPUMonitoringService(), interval: TimeInterval = 2.0) {
+    init(
+        service: CPUMonitoringServiceProtocol = CPUMonitoringService(),
+        audioPlayer: AudioPlayerServiceProtocol = AudioPlayerService(),
+        settings: AppSettings = AppSettings(),
+        interval: TimeInterval = 2.0
+    ) {
         self.service = service
+        self.audioPlayer = audioPlayer
+        self.settings = settings
         self.interval = interval
         startMonitoring()
     }
@@ -38,13 +48,28 @@ final class MenuBarViewModel {
                 guard !Task.isCancelled else { break }
                 switch result {
                 case .success(let usage):
-                    self.cpuUsage = Int(usage.rounded())
+                    let rounded = Int(usage.rounded())
+                    self.cpuUsage = rounded
                     self.permissionsError = false
+                    self.checkThreshold(cpuUsage: rounded)
                 case .failure:
                     self.cpuUsage = nil
                     self.permissionsError = true
                 }
             }
+        }
+    }
+
+    private func checkThreshold(cpuUsage: Int) {
+        if cpuUsage >= settings.threshold {
+            if !hasExceededThreshold && settings.soundEnabled {
+                hasExceededThreshold = true
+                Task {
+                    await audioPlayer.playScream()
+                }
+            }
+        } else {
+            hasExceededThreshold = false
         }
     }
 }
