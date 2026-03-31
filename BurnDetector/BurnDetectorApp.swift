@@ -9,5 +9,9 @@ struct BurnDetectorApp: App {
             MenuBarView(viewModel: viewModel)
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            SettingsView(settings: viewModel.settings)
+        }
     }
 }
