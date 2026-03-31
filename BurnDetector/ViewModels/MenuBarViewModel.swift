@@ -13,7 +13,7 @@ final class MenuBarViewModel {
 
     private let service: CPUMonitoringServiceProtocol
     private let interval: TimeInterval
-    private var monitoringTask: Task<Void, Never>?
+    private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
 
     // MARK: - Init
 
