@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MenuBarView: View {
+    let viewModel: MenuBarViewModel
 
     // MARK: - Body
 
@@ -9,9 +10,15 @@ struct MenuBarView: View {
             Text("BurnDetector")
                 .font(.headline)
 
-            Text("CPU: --%")
+            Text(cpuLabel)
                 .font(.body)
                 .foregroundStyle(.secondary)
+
+            if viewModel.permissionsError {
+                Text("Permissions required to read CPU usage")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
 
             Divider()
 
@@ -22,8 +29,13 @@ struct MenuBarView: View {
         .padding()
         .frame(width: 200)
     }
-}
 
-#Preview {
-    MenuBarView()
+    // MARK: - Private
+
+    private var cpuLabel: String {
+        if let usage = viewModel.cpuUsage {
+            return "CPU: \(usage)%"
+        }
+        return "CPU: --%"
+    }
 }
