@@ -8,6 +8,7 @@ struct AppSettingsTests {
     init() {
         UserDefaults.standard.removeObject(forKey: "cpuThreshold")
         UserDefaults.standard.removeObject(forKey: "soundEnabled")
+        UserDefaults.standard.removeObject(forKey: "selectedSound")
     }
 
     @Test
@@ -16,6 +17,7 @@ struct AppSettingsTests {
 
         #expect(settings.threshold == 90)
         #expect(settings.soundEnabled == true)
+        #expect(settings.selectedSound == "scream")
     }
 
     @Test
@@ -35,13 +37,32 @@ struct AppSettingsTests {
     }
 
     @Test
+    func selectedSoundPersistsToUserDefaults() {
+        let settings = AppSettings()
+        settings.selectedSound = "sheep"
+
+        #expect(UserDefaults.standard.string(forKey: "selectedSound") == "sheep")
+    }
+
+    @Test
     func restoresPersistedValues() {
         UserDefaults.standard.set(60, forKey: "cpuThreshold")
         UserDefaults.standard.set(false, forKey: "soundEnabled")
+        UserDefaults.standard.set("sheep", forKey: "selectedSound")
 
         let settings = AppSettings()
 
         #expect(settings.threshold == 60)
         #expect(settings.soundEnabled == false)
+        #expect(settings.selectedSound == "sheep")
+    }
+
+    @Test
+    func fallsBackToDefaultWhenStoredSoundMissing() {
+        UserDefaults.standard.set("nonexistent_sound", forKey: "selectedSound")
+
+        let settings = AppSettings()
+
+        #expect(settings.selectedSound == "scream")
     }
 }

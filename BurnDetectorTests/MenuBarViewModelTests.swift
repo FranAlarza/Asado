@@ -21,9 +21,11 @@ struct MockCPUMonitoringService: CPUMonitoringServiceProtocol {
 
 final class MockAudioPlayerService: AudioPlayerServiceProtocol, @unchecked Sendable {
     private(set) var playCount = 0
+    private(set) var lastPlayedSound: String?
 
-    func playScream() async {
+    func playSound(named name: String) async {
         playCount += 1
+        lastPlayedSound = name
     }
 }
 
@@ -86,6 +88,7 @@ struct ThresholdAlertTests {
     init() {
         UserDefaults.standard.removeObject(forKey: "cpuThreshold")
         UserDefaults.standard.removeObject(forKey: "soundEnabled")
+        UserDefaults.standard.removeObject(forKey: "selectedSound")
     }
 
     @Test @MainActor
@@ -99,6 +102,7 @@ struct ThresholdAlertTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 1)
+        #expect(audio.lastPlayedSound == "scream")
         _ = viewModel
     }
 
@@ -156,6 +160,22 @@ struct ThresholdAlertTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 0)
+        _ = viewModel
+    }
+
+    @Test @MainActor
+    func soundUsesSelectedSound() async throws {
+        let audio = MockAudioPlayerService()
+        let service = MockCPUMonitoringService(results: [.success(95.0)])
+        let settings = AppSettings()
+        settings.threshold = 90
+        settings.selectedSound = "sheep"
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(audio.playCount == 1)
+        #expect(audio.lastPlayedSound == "sheep")
         _ = viewModel
     }
 }
