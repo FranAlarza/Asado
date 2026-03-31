@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import BurnDetector
 
-// MARK: - Mock Service
+// MARK: - Mock CPU Service
 
 struct MockCPUMonitoringService: CPUMonitoringServiceProtocol {
     let results: [Result<Double, Error>]
@@ -17,7 +17,17 @@ struct MockCPUMonitoringService: CPUMonitoringServiceProtocol {
     }
 }
 
-// MARK: - Tests
+// MARK: - Mock Audio Service
+
+final class MockAudioPlayerService: AudioPlayerServiceProtocol, @unchecked Sendable {
+    private(set) var playCount = 0
+
+    func playScream() async {
+        playCount += 1
+    }
+}
+
+// MARK: - CPU Usage Tests
 
 struct MenuBarViewModelTests {
 
@@ -26,7 +36,6 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.success(42.3)])
         let viewModel = MenuBarViewModel(service: service)
 
-        // Allow the async stream to deliver
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(viewModel.cpuUsage == 42)
@@ -66,5 +75,79 @@ struct MenuBarViewModelTests {
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(viewModel.cpuUsage == 100)
+    }
+}
+
+// MARK: - Threshold Alert Tests
+
+struct ThresholdAlertTests {
+
+    private func makeSettings(threshold: Int = 90, soundEnabled: Bool = true) -> AppSettings {
+        UserDefaults.standard.removeObject(forKey: "cpuThreshold")
+        UserDefaults.standard.removeObject(forKey: "soundEnabled")
+        let settings = AppSettings()
+        settings.threshold = threshold
+        settings.soundEnabled = soundEnabled
+        return settings
+    }
+
+    @Test @MainActor
+    func soundPlaysWhenCrossingThresholdUpward() async throws {
+        let audio = MockAudioPlayerService()
+        let service = MockCPUMonitoringService(results: [.success(95.0)])
+        let settings = makeSettings(threshold: 90)
+        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(audio.playCount == 1)
+    }
+
+    @Test @MainActor
+    func soundDoesNotPlayWhenBelowThreshold() async throws {
+        let audio = MockAudioPlayerService()
+        let service = MockCPUMonitoringService(results: [.success(50.0)])
+        let settings = makeSettings(threshold: 90)
+        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(audio.playCount == 0)
+    }
+
+    @Test @MainActor
+    func soundDoesNotRepeatWhileAboveThreshold() async throws {
+        let audio = MockAudioPlayerService()
+        let service = MockCPUMonitoringService(results: [.success(95.0), .success(97.0), .success(92.0)])
+        let settings = makeSettings(threshold: 90)
+        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(audio.playCount == 1)
+    }
+
+    @Test @MainActor
+    func soundPlaysAgainAfterDroppingAndRising() async throws {
+        let audio = MockAudioPlayerService()
+        let service = MockCPUMonitoringService(results: [.success(95.0), .success(80.0), .success(95.0)])
+        let settings = makeSettings(threshold: 90)
+        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(audio.playCount == 2)
+    }
+
+    @Test @MainActor
+    func soundDoesNotPlayWhenDisabled() async throws {
+        let audio = MockAudioPlayerService()
+        let service = MockCPUMonitoringService(results: [.success(95.0)])
+        let settings = makeSettings(threshold: 90, soundEnabled: false)
+        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(audio.playCount == 0)
     }
 }
