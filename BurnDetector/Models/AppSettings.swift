@@ -23,7 +23,7 @@ final class AppSettings {
 
     private static let defaultThreshold = 90
     private static let defaultSoundEnabled = true
-    private static let defaultSelectedSound = "scream"
+    static let defaultSelectedSound = "scream"
 
     // MARK: - Properties
 
@@ -35,6 +35,7 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(soundEnabled, forKey: Keys.soundEnabled) }
     }
 
+    /// Stores either a bundled filename (e.g. "scream") or an absolute path for custom sounds.
     var selectedSound: String {
         didSet { UserDefaults.standard.set(selectedSound, forKey: Keys.selectedSound) }
     }
@@ -58,14 +59,27 @@ final class AppSettings {
         }
 
         if let stored = defaults.string(forKey: Keys.selectedSound) {
-            if Bundle.main.url(forResource: stored, withExtension: "mp3") != nil {
+            let isValid = Self.validate(selectedSound: stored)
+            if isValid {
                 self.selectedSound = stored
             } else {
-                logger.warning("Stored sound '\(stored)' not found in bundle, resetting to default")
+                logger.warning("Stored sound '\(stored)' is no longer valid, resetting to default")
                 self.selectedSound = Self.defaultSelectedSound
             }
         } else {
             self.selectedSound = Self.defaultSelectedSound
+        }
+    }
+
+    // MARK: - Validation
+
+    static func validate(selectedSound: String) -> Bool {
+        if selectedSound.contains("/") {
+            // Custom sound — validate file exists on disk
+            return FileManager.default.fileExists(atPath: selectedSound)
+        } else {
+            // Bundled sound — validate via Bundle
+            return Bundle.main.url(forResource: selectedSound, withExtension: "mp3") != nil
         }
     }
 }
