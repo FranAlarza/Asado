@@ -44,7 +44,7 @@ final class AppSettings {
 
     init() {
         let defaults = UserDefaults.standard
-        let logger = Logger(subsystem: "com.aweapps.BurnDetector", category: "AppSettings")
+        let logger = Logger(subsystem: "com.aweapps.Asado", category: "AppSettings")
 
         if defaults.object(forKey: Keys.threshold) != nil {
             self.threshold = defaults.integer(forKey: Keys.threshold)

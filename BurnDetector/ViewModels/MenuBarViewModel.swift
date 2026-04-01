@@ -26,7 +26,7 @@ final class MenuBarViewModel {
     private let interval: TimeInterval
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
-    private let logger = Logger(subsystem: "com.aweapps.BurnDetector", category: "MenuBarViewModel")
+    private let logger = Logger(subsystem: "com.aweapps.Asado", category: "MenuBarViewModel")
 
     // MARK: - Init
 

@@ -19,7 +19,7 @@ protocol AudioPlayerServiceProtocol: Sendable {
 
 final class AudioPlayerService: AudioPlayerServiceProtocol, @unchecked Sendable {
 
-    private let logger = Logger(subsystem: "com.aweapps.BurnDetector", category: "AudioPlayer")
+    private let logger = Logger(subsystem: "com.aweapps.Asado", category: "AudioPlayer")
     private var player: AVAudioPlayer?
 
     func playSound(url: URL) async {
