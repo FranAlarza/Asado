@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import BurnDetector
+@testable import Asado
 
 @Suite(.serialized)
 struct AppSettingsTests {

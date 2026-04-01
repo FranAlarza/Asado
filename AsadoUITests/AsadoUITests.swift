@@ -1,13 +1,13 @@
 //
-//  BurnDetectorUITests.swift
-//  BurnDetectorUITests
+//  AsadoUITests.swift
+//  AsadoUITests
 //
 //  Created by Fran Alarza on 31/3/26.
 //
 
 import XCTest
 
-final class BurnDetectorUITests: XCTestCase {
+final class AsadoUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

@@ -1,6 +1,6 @@
 //
 //  MenuBarViewModel.swift
-//  BurnDetector
+//  Asado
 //
 //  Created by Fran Alarza on 31/3/26.
 //

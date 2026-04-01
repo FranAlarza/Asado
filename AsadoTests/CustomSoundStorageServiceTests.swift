@@ -1,12 +1,12 @@
 import Foundation
 import Testing
-@testable import BurnDetector
+@testable import Asado
 
 @Suite(.serialized)
 struct CustomSoundStorageServiceTests {
 
     private var tempDirectory: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("BurnDetectorTests/Sounds", isDirectory: true)
+        FileManager.default.temporaryDirectory.appendingPathComponent("AsadoTests/Sounds", isDirectory: true)
     }
 
     private func makeSUT() -> CustomSoundStorageService {
@@ -15,7 +15,7 @@ struct CustomSoundStorageServiceTests {
     }
 
     private func makeTempAudioFile(named name: String) throws -> URL {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("BurnDetectorTestSources")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("AsadoTestSources")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let file = dir.appendingPathComponent(name)
         // Write dummy data (not real audio, but enough for copy tests)

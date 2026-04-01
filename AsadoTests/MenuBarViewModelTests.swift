@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import BurnDetector
+@testable import Asado
 
 // MARK: - Mock CPU Service
 

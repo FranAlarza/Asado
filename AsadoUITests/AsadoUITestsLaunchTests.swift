@@ -1,13 +1,13 @@
 //
-//  BurnDetectorUITestsLaunchTests.swift
-//  BurnDetectorUITests
+//  AsadoUITestsLaunchTests.swift
+//  AsadoUITests
 //
 //  Created by Fran Alarza on 31/3/26.
 //
 
 import XCTest
 
-final class BurnDetectorUITestsLaunchTests: XCTestCase {
+final class AsadoUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

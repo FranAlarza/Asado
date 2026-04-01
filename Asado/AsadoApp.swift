@@ -1,6 +1,6 @@
 //
-//  BurnDetectorApp.swift
-//  BurnDetector
+//  AsadoApp.swift
+//  Asado
 //
 //  Created by Fran Alarza on 31/3/26.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct BurnDetectorApp: App {
+struct AsadoApp: App {
     @State private var viewModel = MenuBarViewModel()
 
     var body: some Scene {
