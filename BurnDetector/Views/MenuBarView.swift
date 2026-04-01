@@ -16,7 +16,7 @@ struct MenuBarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("BurnDetector")
+                Text("Asado")
                     .font(.headline)
 
                 Spacer()

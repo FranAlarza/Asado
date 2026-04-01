@@ -12,7 +12,7 @@ struct BurnDetectorApp: App {
     @State private var viewModel = MenuBarViewModel()
 
     var body: some Scene {
-        MenuBarExtra("Burn Detector", systemImage: "flame.fill") {
+        MenuBarExtra("Asado", systemImage: "flame.fill") {
             MenuBarView(viewModel: viewModel)
         }
         .menuBarExtraStyle(.window)
