@@ -40,14 +40,14 @@ enum CustomSoundStorageError: Error, LocalizedError {
 
 final class CustomSoundStorageService: CustomSoundStorageServiceProtocol, @unchecked Sendable {
 
-    private let logger = Logger(subsystem: "com.aweapps.BurnDetector", category: "CustomSoundStorage")
+    private let logger = Logger(subsystem: "com.aweapps.Asado", category: "CustomSoundStorage")
     private static let supportedExtensions = ["mp3", "wav", "aiff", "m4a"]
 
     // MARK: - Storage Directory
 
     var storageDirectory: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return appSupport.appendingPathComponent("BurnDetector/Sounds", isDirectory: true)
+        return appSupport.appendingPathComponent("Asado/Sounds", isDirectory: true)
     }
 
     // MARK: - Import
