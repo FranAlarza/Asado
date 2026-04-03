@@ -67,6 +67,7 @@ final class MenuBarViewModel {
                     let rounded = Int(usage.rounded())
                     self.cpuUsage = rounded
                     self.permissionsError = false
+                    self.topProcesses = self.processService.topProcesses(limit: 5)
                     await self.checkThreshold(cpuUsage: rounded)
                 case .failure:
                     self.cpuUsage = nil
@@ -78,7 +79,6 @@ final class MenuBarViewModel {
 
     private func checkThreshold(cpuUsage: Int) async {
         if cpuUsage >= settings.threshold {
-            topProcesses = processService.topProcesses(limit: 5)
             if !hasExceededThreshold && settings.soundEnabled {
                 hasExceededThreshold = true
                 let allSounds = SoundOption.all(using: storageService)
@@ -91,7 +91,6 @@ final class MenuBarViewModel {
             }
         } else {
             hasExceededThreshold = false
-            topProcesses = []
         }
     }
 }

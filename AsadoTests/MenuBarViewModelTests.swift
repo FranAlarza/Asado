@@ -235,19 +235,19 @@ struct TopProcessTests {
     }
 
     @Test @MainActor
-    func topProcessesClearedWhenBelowThreshold() async throws {
+    func topProcessesAlwaysPopulatedRegardlessOfThreshold() async throws {
         let mockProcesses = [
             TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil)
         ]
         let processService = MockProcessMonitoringService(processes: mockProcesses)
-        let cpuService = MockCPUMonitoringService(results: [.success(95.0), .success(50.0)])
+        let cpuService = MockCPUMonitoringService(results: [.success(95.0), .success(20.0)])
         let settings = AppSettings()
         settings.threshold = 90
         let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService)
 
         try await Task.sleep(for: .milliseconds(500))
 
-        #expect(viewModel.topProcesses.isEmpty)
+        #expect(viewModel.topProcesses.count == 1)
         _ = viewModel
     }
 }

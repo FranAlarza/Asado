@@ -39,10 +39,8 @@ struct MenuBarView: View {
                     .foregroundStyle(.red)
             }
 
-            if !viewModel.topProcesses.isEmpty {
-                Divider()
-                processListSection
-            }
+            Divider()
+            processListSection
 
             Divider()
 
