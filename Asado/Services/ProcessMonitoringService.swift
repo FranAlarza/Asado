@@ -37,19 +37,31 @@ final class ProcessMonitoringService: ProcessMonitoringServiceProtocol, @uncheck
     func topProcesses(limit: Int) -> [TopProcess] {
         let now = Date()
         let elapsedNs = now.timeIntervalSince(lastSampleDate) * 1_000_000_000
-        guard elapsedNs > 0 else { return [] }
+        logger.debug("topProcesses called — elapsedNs=\(elapsedNs, format: .fixed(precision: 0)), previousSnapshot.count=\(self.previousSnapshot.count)")
+        guard elapsedNs > 0 else {
+            logger.warning("topProcesses: elapsedNs <= 0, returning empty")
+            return []
+        }
 
         let pids = allPIDs()
-        guard !pids.isEmpty else { return [] }
+        logger.debug("topProcesses: found \(pids.count) PIDs")
+        guard !pids.isEmpty else {
+            logger.error("topProcesses: allPIDs() returned empty")
+            return []
+        }
 
         var currentSnapshot: [Int32: ProcessTicks] = [:]
         var results: [TopProcess] = []
+        var pidInfoFailures = 0
 
         for pid in pids {
             var info = proc_taskinfo()
             let size = Int32(MemoryLayout<proc_taskinfo>.size)
             let ret = proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &info, size)
-            guard ret == size else { continue }
+            guard ret == size else {
+                pidInfoFailures += 1
+                continue
+            }
 
             let current = ProcessTicks(user: info.pti_total_user, system: info.pti_total_system)
             currentSnapshot[pid] = current
@@ -66,21 +78,31 @@ final class ProcessMonitoringService: ProcessMonitoringServiceProtocol, @uncheck
             results.append(TopProcess(id: pid, name: name, cpuUsage: cpuUsage, icon: icon))
         }
 
+        logger.debug("topProcesses: pidInfoFailures=\(pidInfoFailures), processes with cpuUsage>0: \(results.count), currentSnapshot.count=\(currentSnapshot.count)")
+
         previousSnapshot = currentSnapshot
         lastSampleDate = now
 
-        return Array(results.sorted { $0.cpuUsage > $1.cpuUsage }.prefix(limit))
+        let sorted = Array(results.sorted { $0.cpuUsage > $1.cpuUsage }.prefix(limit))
+        logger.info("topProcesses returning \(sorted.count) entries: \(sorted.map { "\($0.name)=\(String(format: "%.1f", $0.cpuUsage))%" }.joined(separator: ", "))")
+        return sorted
     }
 
     // MARK: - Private
 
     private func allPIDs() -> [Int32] {
         let byteCount = proc_listpids(UInt32(PROC_ALL_PIDS), 0, nil, 0)
-        guard byteCount > 0 else { return [] }
+        guard byteCount > 0 else {
+            logger.error("allPIDs: proc_listpids(nil) returned \(byteCount), errno=\(errno)")
+            return []
+        }
 
         var buffer = [Int32](repeating: 0, count: Int(byteCount) / MemoryLayout<Int32>.size)
         let written = proc_listpids(UInt32(PROC_ALL_PIDS), 0, &buffer, byteCount)
-        guard written > 0 else { return [] }
+        guard written > 0 else {
+            logger.error("allPIDs: proc_listpids(buffer) returned \(written), errno=\(errno)")
+            return []
+        }
 
         let count = Int(written) / MemoryLayout<Int32>.size
         return buffer.prefix(count).filter { $0 > 0 }

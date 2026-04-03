@@ -38,7 +38,7 @@ final class MenuBarViewModel {
         settings: AppSettings = AppSettings(),
         storageService: CustomSoundStorageServiceProtocol = CustomSoundStorageService(),
         processService: ProcessMonitoringServiceProtocol = ProcessMonitoringService(),
-        interval: TimeInterval = 2.0
+        interval: TimeInterval = 5.0
     ) {
         self.service = service
         self.audioPlayer = audioPlayer
