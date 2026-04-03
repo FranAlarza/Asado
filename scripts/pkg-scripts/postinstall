@@ -1,0 +1,3 @@
+#!/bin/bash
+open /Applications/Asado.app
+exit 0
