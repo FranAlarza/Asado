@@ -32,40 +32,27 @@ jobs:
           echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
 
-      # ── Import certificates ───────────────────────────────────
-      - name: Import signing certificates
+      # ── Import certificate ────────────────────────────────────
+      - name: Import signing certificate
         env:
           APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_INSTALLER_CERTIFICATE_BASE64: ${{ secrets.APPLE_INSTALLER_CERTIFICATE_BASE64 }}
-          APPLE_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_INSTALLER_CERTIFICATE_PASSWORD }}
         run: |
-          APP_CERT_PATH=$RUNNER_TEMP/app-certificate.p12
-          INST_CERT_PATH=$RUNNER_TEMP/installer-certificate.p12
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
           KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
-          # Decode certificates
-          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$APP_CERT_PATH"
-          echo "$APPLE_INSTALLER_CERTIFICATE_BASE64" | base64 --decode > "$INST_CERT_PATH"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
 
-          # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Import both certificates
-          security import "$APP_CERT_PATH" \
+          security import "$CERT_PATH" \
             -P "$APPLE_CERTIFICATE_PASSWORD" \
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-          security import "$INST_CERT_PATH" \
-            -P "$APPLE_INSTALLER_CERTIFICATE_PASSWORD" \
-            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
-          # Allow codesign/productsign to access the keychain
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-          # Add to keychain search list
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
 
       # ── Build ─────────────────────────────────────────────────
@@ -89,37 +76,20 @@ jobs:
             -exportPath "$EXPORT_PATH" \
             -exportOptionsPlist scripts/export-options.plist
 
-      # ── Build PKG ─────────────────────────────────────────────
-      - name: Build PKG
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # ── Notarize .app ─────────────────────────────────────────
+      - name: Zip app for notarization
         run: |
-          PKG_UNSIGNED="build/${APP_NAME}-${VERSION}-unsigned.pkg"
-          PKG_SIGNED="build/${APP_NAME}-${VERSION}.pkg"
+          ditto -c -k --keepParent \
+            "$EXPORT_PATH/$APP_NAME.app" \
+            "$EXPORT_PATH/$APP_NAME.zip"
 
-          pkgbuild \
-            --root "$EXPORT_PATH" \
-            --install-location /Applications \
-            --scripts scripts/pkg-scripts \
-            --identifier "com.aweapps.Asado" \
-            --version "$VERSION" \
-            "$PKG_UNSIGNED"
-
-          productsign \
-            --sign "Developer ID Installer: Fran Alarza ($APPLE_TEAM_ID)" \
-            "$PKG_UNSIGNED" \
-            "$PKG_SIGNED"
-
-      # ── Notarize ──────────────────────────────────────────────
-      - name: Notarize PKG
+      - name: Notarize app
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          PKG_SIGNED="build/${APP_NAME}-${VERSION}.pkg"
-
-          OUTPUT=$(xcrun notarytool submit "$PKG_SIGNED" \
+          OUTPUT=$(xcrun notarytool submit "$EXPORT_PATH/$APP_NAME.zip" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
@@ -141,7 +111,18 @@ jobs:
           fi
 
       - name: Staple notarization ticket
-        run: xcrun stapler staple "build/${APP_NAME}-${VERSION}.pkg"
+        run: xcrun stapler staple "$EXPORT_PATH/$APP_NAME.app"
+
+      # ── Build PKG (con .app notarizada dentro) ────────────────
+      - name: Build PKG
+        run: |
+          pkgbuild \
+            --root "$EXPORT_PATH" \
+            --install-location /Applications \
+            --scripts scripts/pkg-scripts \
+            --identifier "com.aweapps.Asado" \
+            --version "$VERSION" \
+            "build/${APP_NAME}-${VERSION}.pkg"
 
       # ── GitHub Release ────────────────────────────────────────
       - name: Create GitHub Release
