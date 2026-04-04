@@ -137,7 +137,7 @@ jobs:
             "$PKG_UNSIGNED"
 
           productsign \
-            --sign "Developer ID Installer: Fran Alarza ($APPLE_TEAM_ID)" \
+            --sign "Developer ID Installer: FRANCISCO JAVIER ALARZA SANCHEZ ($APPLE_TEAM_ID)" \
             "$PKG_UNSIGNED" \
             "$PKG_SIGNED"
 
